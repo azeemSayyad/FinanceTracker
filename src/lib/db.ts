@@ -7,11 +7,7 @@ import { Transaction } from "@/entities/Transaction";
 
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || "5432"),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    url: process.env.DATABASE_URL || "",
     ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
     synchronize: true, // Using synchronize for rapid development/demo
     logging: false,

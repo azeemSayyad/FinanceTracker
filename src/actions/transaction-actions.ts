@@ -3,28 +3,7 @@
 import { getDataSource } from "@/lib/db";
 import { Transaction } from "@/entities/Transaction";
 import { TransactionType } from "@/lib/types";
-import { s3Client, BUCKET_NAME } from "@/lib/s3";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { revalidatePath } from "next/cache";
-import { v4 as uuidv4 } from "uuid";
-
-async function uploadFileToS3(file: File) {
-    const fileBuffer = await file.arrayBuffer();
-    const fileExtension = file.name.split(".").pop();
-    const key = `receipts/${uuidv4()}.${fileExtension}`;
-
-    await s3Client.send(
-        new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key,
-            Body: Buffer.from(fileBuffer),
-            ContentType: file.type,
-            ACL: "public-read", // Ensure bucket allows public read or handle signed URLs
-        })
-    );
-
-    return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-}
 
 export async function createTransaction(formData: FormData) {
     const amount = parseFloat(formData.get("amount") as string);
@@ -40,15 +19,16 @@ export async function createTransaction(formData: FormData) {
     }
 
     let imageUrl = null;
+    // S3 Uploading disabled for now
+    /*
     if (imageFile && imageFile.size > 0) {
         try {
             imageUrl = await uploadFileToS3(imageFile);
         } catch (e) {
             console.error("S3 Upload Failed", e);
-            // Continue without image or return error? 
-            // Let's continue but warn
         }
     }
+    */
 
     try {
         const db = await getDataSource();
@@ -114,7 +94,7 @@ export async function updateTransaction(id: string, formData: FormData) {
         transaction.notes = notes;
 
         if (imageFile && imageFile.size > 0) {
-            transaction.imageUrl = await uploadFileToS3(imageFile);
+            // transaction.imageUrl = await uploadFileToS3(imageFile);
         }
 
         await repo.save(transaction);
