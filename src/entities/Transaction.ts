@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Worker } from "./Worker";
-import { Client } from "./Client";
+import type { Worker } from "./Worker";
+import type { Client } from "./Client";
 import { TransactionType } from "@/lib/types";
 
 @Entity("transactions")
@@ -29,14 +29,14 @@ export class Transaction {
     @Column({ nullable: true })
     workerId?: string;
 
-    @ManyToOne(() => Worker, (worker: Worker) => worker.transactions, { nullable: true, onDelete: "CASCADE" })
+    @ManyToOne("Worker", (worker: Worker) => worker.transactions, { nullable: true, onDelete: "CASCADE" })
     @JoinColumn({ name: "workerId" })
     worker?: Worker;
 
     @Column({ nullable: true })
     clientId?: string;
 
-    @ManyToOne(() => Client, (client: Client) => client.transactions, { nullable: true, onDelete: "CASCADE" })
+    @ManyToOne("Client", (client: Client) => client.transactions, { nullable: true, onDelete: "CASCADE" })
     @JoinColumn({ name: "clientId" })
     client?: Client;
 

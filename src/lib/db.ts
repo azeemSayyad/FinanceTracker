@@ -9,18 +9,44 @@ import { getMetadataArgsStorage } from "typeorm";
 /**
  * Workaround for Next.js minification mangling class names in production.
  * TypeORM uses constructor names to find entity metadata, which breaks when mangled.
- * This manually restores the class name from the entity's table metadata.
+ * This restores class names and registers fallback entity lookups for relationships.
  */
 function fixTypeORMMinification() {
     const storage = getMetadataArgsStorage();
-    storage.tables.forEach((table) => {
+    const entityMap = new Map<string, any>();
+    
+    // Restore entity class names and build map
+    storage.tables.forEach((table: any) => {
         if (table.target instanceof Function) {
+            const tableName = table.name;
+            // Restore the class name property
             Object.defineProperty(table.target, "name", {
-                value: (table as any).name || (table.target as any).name,
+                value: tableName,
                 configurable: true,
             });
+            // Store in map for relationship lookups
+            entityMap.set(tableName, table.target);
         }
     });
+    
+    // Fix relationship metadata references
+    storage.relations.forEach((relation: any) => {
+        if (typeof relation.type === 'function') {
+            const relationType = relation.type();
+            if (relation.target instanceof Function) {
+                // Ensure the target entity in relationships can be found
+                const entityName = relation.target.name;
+                if (!entityMap.has(entityName)) {
+                    entityMap.set(entityName, relation.target);
+                }
+            }
+        }
+    });
+    
+    // Patch TypeORM's entity lookup to use our map as fallback
+    if ((global as any).__typeormEntityMap === undefined) {
+        (global as any).__typeormEntityMap = entityMap;
+    }
 }
 
 export const AppDataSource = new DataSource({
