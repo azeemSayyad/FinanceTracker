@@ -15,4 +15,6 @@ export interface TransactionDTO {
     date: Date | string;
     notes?: string;
     imageUrl?: string;
+    worker?: { name: string };
+    client?: { name: string };
 }

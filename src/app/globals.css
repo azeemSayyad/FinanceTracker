@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
@@ -93,48 +94,129 @@
 }
 
 @layer utilities {
-  .glass {
-    background-color: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  .card-premium {
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted)/0.3));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: all 0.2s ease-in-out;
   }
 
-  .dark .glass {
-    background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .card-premium:hover {
+    border-color: hsl(var(--primary)/0.3);
+    box-shadow: 0 10px 30px -10px hsl(var(--primary)/0.15);
   }
 
-  .glass-card {
-    background-color: color-mix(in srgb, hsl(var(--card)), transparent 40%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid color-mix(in srgb, hsl(var(--border)), transparent 50%);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Specific color-coded cards */
+  .card-incoming {
+    background: linear-gradient(135deg, hsl(var(--success)/0.08), hsl(var(--card)));
+    border: 1px solid hsl(var(--success)/0.2);
+    border-radius: var(--radius);
+    padding: 1.25rem;
   }
 
-  .dark .glass-card {
-    background-color: color-mix(in srgb, hsl(var(--card)), transparent 60%);
+  .card-outgoing {
+    background: linear-gradient(135deg, hsla(24, 100%, 50%, 0.08), hsl(var(--card)));
+    border: 1px solid hsla(24, 100%, 50%, 0.2);
+    border-radius: var(--radius);
+    padding: 1.25rem;
   }
 
-  .text-gradient {
-    background-image: linear-gradient(to right, hsl(var(--primary)), #a855f7, #ec4899);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .card-balance {
+    background: linear-gradient(135deg, hsl(var(--foreground)/0.03), hsl(var(--card)));
+    border: 1px solid hsl(var(--foreground)/0.1);
+    border-radius: var(--radius);
+    padding: 1.25rem;
   }
 
-  .animate-blob {
-    animation: blob 7s infinite;
+  .dark .card-balance {
+    background: linear-gradient(135deg, hsl(var(--foreground)/0.05), hsl(var(--card)));
+    border: 1px solid hsl(var(--foreground)/0.2);
   }
 
-  .animation-delay-2000 {
-    animation-delay: 2s;
+  .btn-surface {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    padding: 0.6rem 1.25rem;
+    border-radius: calc(var(--radius) - 0.25rem);
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: all 0.2s;
   }
 
-  .animation-delay-4000 {
-    animation-delay: 4s;
+  .btn-surface:hover {
+    background-color: hsl(var(--muted)/0.5);
+    border-color: hsl(var(--primary)/0.3);
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 0.6rem 1.25rem;
+    border-radius: calc(var(--radius) - 0.25rem);
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px 0 hsl(var(--primary)/0.3);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.23);
+    transform: translateY(-1px);
+  }
+
+  .btn-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, hsl(var(--foreground)), hsl(var(--foreground)/0.9));
+    color: hsl(var(--background));
+    padding: 0.6rem 1.25rem;
+    border-radius: calc(var(--radius) - 0.25rem);
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: all 0.22s;
+    box-shadow: 0 4px 12px hsl(var(--foreground)/0.15);
+  }
+
+  .btn-action:hover {
+    background: linear-gradient(135deg, hsl(var(--foreground)/0.9), hsl(var(--foreground)/0.8));
+    box-shadow: 0 6px 18px hsl(var(--foreground)/0.25);
+    transform: translateY(-1px);
+  }
+
+  .text-main {
+    color: hsl(var(--foreground));
+  }
+
+  .text-muted {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .text-incoming {
+    color: hsl(var(--success));
+  }
+
+  .text-outgoing {
+    color: #f97316;
+  }
+
+  .bg-incoming {
+    background-color: hsl(var(--success)/0.1);
+    color: hsl(var(--success));
+  }
+
+  .bg-outgoing {
+    background-color: rgba(249, 115, 22, 0.1);
+    color: #f97316;
   }
 }
 

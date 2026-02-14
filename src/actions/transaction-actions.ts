@@ -88,3 +88,67 @@ export async function getTransactionsByClient(clientId: string) {
     const repo = db.getRepository(Transaction);
     return await repo.find({ where: { client: { id: clientId } }, order: { date: "DESC" } });
 }
+
+export async function updateTransaction(id: string, formData: FormData) {
+    const amount = parseFloat(formData.get("amount") as string);
+    const date = formData.get("date") as string;
+    const notes = formData.get("notes") as string;
+    const imageFile = formData.get("image") as File;
+
+    if (!amount || !date) {
+        return { error: "Amount and Date are required" };
+    }
+
+    try {
+        const db = await getDataSource();
+        const repo = db.getRepository(Transaction);
+
+        const transaction = await repo.findOne({
+            where: { id },
+            relations: ["worker", "client"]
+        });
+        if (!transaction) return { error: "Transaction not found" };
+
+        transaction.amount = amount;
+        transaction.date = new Date(date);
+        transaction.notes = notes;
+
+        if (imageFile && imageFile.size > 0) {
+            transaction.imageUrl = await uploadFileToS3(imageFile);
+        }
+
+        await repo.save(transaction);
+
+        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/transactions");
+        if (transaction.workerId) revalidatePath(`/dashboard/workers/${transaction.workerId}`);
+        if (transaction.clientId) revalidatePath(`/dashboard/clients/${transaction.clientId}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Update transaction error:", error);
+        return { error: "Failed to update transaction" };
+    }
+}
+
+export async function deleteTransaction(id: string) {
+    try {
+        const db = await getDataSource();
+        const repo = db.getRepository(Transaction);
+
+        const transaction = await repo.findOneBy({ id });
+        if (!transaction) return { error: "Transaction not found" };
+
+        await repo.delete(id);
+
+        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/transactions");
+        if (transaction.workerId) revalidatePath(`/dashboard/workers/${transaction.workerId}`);
+        if (transaction.clientId) revalidatePath(`/dashboard/clients/${transaction.clientId}`);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Delete transaction error:", error);
+        return { error: "Failed to delete transaction" };
+    }
+}

@@ -2,34 +2,38 @@
 
 import { useState } from "react";
 import { getWorkers, createWorker } from "@/actions/worker-actions";
-import { Plus, Search, Phone, Briefcase } from "lucide-react";
+import { Plus, Search, Phone, Briefcase, Edit2, Trash2 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Worker } from "@/entities/Worker";
+import { Avatar } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { updateWorker, deleteWorker } from "@/actions/worker-actions";
 
 export default function WorkersPage({ initialWorkers }: { initialWorkers: Worker[] }) {
     const [workers, setWorkers] = useState<Worker[]>(initialWorkers);
     const [search, setSearch] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState("All");
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const filtered = workers.filter((w) =>
-        w.name.toLowerCase().includes(search.toLowerCase()) ||
-        w.category.toLowerCase().includes(search.toLowerCase())
-    );
+    // Extract unique categories
+    const categories = ["All", ...Array.from(new Set(workers.map(w => w.category))).filter(Boolean)];
 
-    async function handleSubmit(formData: FormData) {
+    const filtered = workers.filter((w) => {
+        const matchesSearch = w.name.toLowerCase().includes(search.toLowerCase()) ||
+            w.category.toLowerCase().includes(search.toLowerCase());
+        const matchesCategory = selectedCategory === "All" || w.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
+
+    async function handleAdd(formData: FormData) {
         setIsSubmitting(true);
         const result = await createWorker(formData);
         if (result.success) {
-            setIsModalOpen(false);
-            // In a real app we might rely on router.refresh() but local state update is instant
-            // However, since we passed initialWorkers from server component, we need to refresh logic or use proper hook
-            // For now, simpler to just trigger a full page refresh or let the server action revalidatePath handle it, 
-            // but client state won't update automatically without router.refresh().
-            // Let's do a window reload or better, use router.refresh() if we had it imported.
-            // Actually, since revalidatePath is used, a router.refresh() would fetch new data.
+            setIsAddModalOpen(false);
             window.location.reload();
         } else {
             alert(result.error);
@@ -37,106 +41,247 @@ export default function WorkersPage({ initialWorkers }: { initialWorkers: Worker
         setIsSubmitting(false);
     }
 
+    async function handleEdit(formData: FormData) {
+        if (!editingWorker) return;
+        setIsSubmitting(true);
+        const result = await updateWorker(editingWorker.id, formData);
+        if (result.success) {
+            setEditingWorker(null);
+            window.location.reload();
+        } else {
+            alert(result.error);
+        }
+        setIsSubmitting(false);
+    }
+
+    async function handleDelete(e: React.MouseEvent, id: string) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm("Are you sure you want to delete this worker? This will also delete all their transactions.")) {
+            const result = await deleteWorker(id);
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.error);
+            }
+        }
+    }
+
+    const getCategoryStyles = (category: string) => {
+        const cats: Record<string, string> = {
+            'TILES': 'border-blue-500/50 text-blue-600 bg-blue-500/5',
+            'PAINT': 'border-orange-500/50 text-orange-600 bg-orange-500/5',
+            'PLUMBING': 'border-green-500/50 text-green-600 bg-green-500/5',
+            'ELECTRICAL': 'border-amber-500/50 text-amber-600 bg-amber-500/5',
+            'INTERIOR DESIGNER': 'border-rose-500/50 text-rose-600 bg-rose-500/5',
+            'DEFAULT': 'border-slate-500/30 text-slate-500 bg-slate-500/5'
+        };
+        return cats[category.toUpperCase()] || cats['DEFAULT'];
+    };
+
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Workers</h1>
-                    <p className="text-muted-foreground">Manage your team and ongoing payments.</p>
+                    <h1 className="text-3xl font-black tracking-tighter text-main">Workers Ledger</h1>
+                    <p className="text-muted text-xs">Manage your field workers and pay status</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-105 transition-all"
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="btn-action"
                 >
                     <Plus className="h-5 w-5" />
                     Add Worker
                 </button>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                <input
-                    type="text"
-                    placeholder="Search workers..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-white/50 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm"
-                />
+            {/* Category Filter & Search */}
+            <div className="space-y-3 px-2">
+                {/* Horizontal Category Scroll */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+                    {categories.map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={cn(
+                                "whitespace-nowrap px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                                selectedCategory === cat
+                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-[1.02]"
+                                    : "bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground border border-transparent hover:border-border/50"
+                            )}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Search bar */}
+                <div className="relative group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted group-focus-within:text-primary transition-colors transition-all" />
+                    <input
+                        placeholder="Search workers..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full bg-card border border-border rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                    />
+                </div>
             </div>
 
-            {/* List */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 md:grid-cols-2 px-2">
                 {filtered.map((worker, i) => (
                     <motion.div
                         key={worker.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.05 }}
                     >
-                        <Link href={`/dashboard/workers/${worker.id}`}>
-                            <div className="glass-card rounded-xl p-2 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="relative z-10">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg group-hover:scale-110 transition-transform">
-                                            {worker.name.charAt(0)}
+                        <Link href={`/dashboard/workers/${worker.id}`} className="block transition-transform active:scale-[0.99] group/card">
+                            <div className="card-premium flex items-center justify-between group p-3 relative overflow-hidden">
+                                <div className="flex items-center gap-4">
+                                    <Avatar name={worker.name} size="lg" className="shadow-sm border-2 border-background" />
+                                    <div className="space-y-1.5">
+                                        <div className="font-black text-lg text-main leading-tight group-hover:text-primary transition-colors">
+                                            {worker.name}
                                         </div>
-                                        <div className="px-2 py-1 rounded-md bg-secondary/50 text-xs font-medium text-secondary-foreground border border-secondary">
-                                            {worker.category}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">{worker.name}</h3>
                                         {worker.phone && (
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-muted opacity-80">
                                                 <Phone className="h-3 w-3" />
                                                 {worker.phone}
                                             </div>
                                         )}
+
+                                        <div className="">
+                                            <span className={cn(
+                                                "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border transition-all",
+                                                getCategoryStyles(worker.category)
+                                            )}>
+                                                {worker.category}
+                                            </span>
+                                        </div>
                                     </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <Briefcase className="h-4 w-4 text-muted group-hover/card:text-primary transition-colors" />
                                 </div>
                             </div>
                         </Link>
                     </motion.div>
                 ))}
-                {filtered.length === 0 && (
-                    <div className="col-span-full py-12 text-center text-muted-foreground glass-card rounded-xl">
-                        No workers found.
-                    </div>
-                )}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Worker">
-                <form action={handleSubmit} className="space-y-4">
+            {/* Add Modal */}
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Worker">
+                <form action={handleAdd} className="space-y-6 pt-2">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Full Name</label>
-                        <input name="name" required className="w-full bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg p-1.5 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="e.g. John Doe" />
+                        <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Full Name</label>
+                        <input
+                            name="name"
+                            required
+                            className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all placeholder:text-muted-foreground/30 text-foreground"
+                            placeholder="e.g. John Doe"
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Phone (Optional)</label>
-                            <input name="phone" className="w-full bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg p-1.5 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="e.g. 9876543210" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Phone</label>
+                            <input
+                                name="phone"
+                                className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all placeholder:text-muted-foreground/30 text-foreground"
+                                placeholder="9876543210"
+                            />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Category</label>
-                            <input name="category" required className="w-full bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg p-1.5 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="e.g. Plumber" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Category</label>
+                            <input
+                                name="category"
+                                required
+                                className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all placeholder:text-muted-foreground/30 text-foreground"
+                                placeholder="e.g. Plumber"
+                            />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Notes (Optional)</label>
-                        <textarea name="notes" className="w-full bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg p-1.5 focus:ring-2 focus:ring-primary/20 outline-none min-h-[80px]" placeholder="Additional details..." />
+                        <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Notes</label>
+                        <textarea
+                            name="notes"
+                            className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all min-h-[120px] placeholder:text-muted-foreground/30 text-foreground"
+                            placeholder="Worker details..."
+                        />
                     </div>
 
-                    <div className="pt-2 flex justify-end gap-2">
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-lg hover:bg-white/10 text-sm font-medium transition-colors">Cancel</button>
-                        <button type="submit" disabled={isSubmitting} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all disabled:opacity-50">
-                            {isSubmitting ? "Saving..." : "Create Worker"}
+                    <div className="pt-2 flex flex-col gap-3">
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full h-16 rounded-[1.5rem] justify-center text-lg font-black bg-gradient-to-br from-primary to-[#0055D4] text-white shadow-xl shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] transition-all flex items-center gap-2"
+                        >
+                            {isSubmitting ? "Saving..." : "Create Worker Profile"}
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal isOpen={!!editingWorker} onClose={() => setEditingWorker(null)} title="Edit Worker Profile">
+                {editingWorker && (
+                    <form action={handleEdit} className="space-y-6 pt-2">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Full Name</label>
+                            <input
+                                name="name"
+                                defaultValue={editingWorker.name}
+                                required
+                                className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all placeholder:text-muted-foreground/30 text-foreground"
+                                placeholder="e.g. John Doe"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Phone</label>
+                                <input
+                                    name="phone"
+                                    defaultValue={editingWorker.phone}
+                                    className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all placeholder:text-muted-foreground/30 text-foreground"
+                                    placeholder="9876543210"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Category</label>
+                                <input
+                                    name="category"
+                                    defaultValue={editingWorker.category}
+                                    required
+                                    className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all placeholder:text-muted-foreground/30 text-foreground"
+                                    placeholder="e.g. Plumber"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/70 ml-1">Notes</label>
+                            <textarea
+                                name="notes"
+                                defaultValue={editingWorker.notes}
+                                className="w-full bg-secondary border-2 border-border/50 rounded-2xl p-4 outline-none focus:border-primary font-bold transition-all min-h-[120px] placeholder:text-muted-foreground/30 text-foreground"
+                                placeholder="Worker details..."
+                            />
+                        </div>
+
+                        <div className="pt-2 flex flex-col gap-3">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full h-16 rounded-[1.5rem] justify-center text-lg font-black bg-gradient-to-br from-primary to-[#0055D4] text-white shadow-xl shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] transition-all flex items-center gap-2"
+                            >
+                                {isSubmitting ? "Saving..." : "Update Worker Profile"}
+                            </button>
+                        </div>
+                    </form>
+                )}
             </Modal>
         </div>
     );

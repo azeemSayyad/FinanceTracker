@@ -25,11 +25,15 @@ export async function getDashboardStats() {
     };
 }
 
-export async function getRecentTransactions(limit = 10) {
+export async function getRecentTransactions(limit = 10, type?: TransactionType) {
     const db = await getDataSource();
     const repo = db.getRepository(Transaction);
-    // Relations to get names
+
+    const where: any = {};
+    if (type) where.type = type;
+
     return await repo.find({
+        where,
         order: { date: "DESC" },
         take: limit,
         relations: ["worker", "client"]

@@ -40,7 +40,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Main Card */}
-                <div className="w-full bg-card/60 backdrop-blur-2xl border border-border/50 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] rounded-[3rem] p-4 md:p-14 relative group">
+                <div className="w-full bg-card/60 backdrop-blur-2xl border border-border/50 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] rounded-[3rem] p-2 md:p-4 relative group">
                     <div className="relative z-10">
                         <div className="mb-10 text-center">
                             <h2 className="text-3xl font-extrabold text-foreground mb-3">
@@ -63,7 +63,7 @@ export default function LoginPage() {
                                             name="username"
                                             type="text"
                                             required
-                                            className="w-full bg-muted/40 border-none rounded-[1.5rem] pl-14 pr-5 py-5 text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
+                                            className="w-full bg-muted/40 border-none rounded-[1.5rem] pl-14 pr-5 py-2 text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
                                             placeholder="name@company.com"
                                         />
                                     </div>
@@ -79,7 +79,7 @@ export default function LoginPage() {
                                             name="password"
                                             type="password"
                                             required
-                                            className="w-full bg-muted/40 border-none rounded-[1.5rem] pl-14 pr-12 py-5 text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
+                                            className="w-full bg-muted/40 border-none rounded-[1.5rem] pl-14 pr-12 py-2 text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
                                             placeholder="••••••••"
                                         />
                                         <div className="absolute inset-y-0 right-0 pr-5 flex items-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors">

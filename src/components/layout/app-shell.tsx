@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { NAV_ITEMS } from "./nav-config";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
-import { Moon, Sun, Search, Bell, Menu, ReceiptIndianRupee } from "lucide-react";
+import { Moon, Sun, Search, Bell, Menu, ReceiptIndianRupee, Briefcase } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 
@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative overflow-hidden",
                                     isActive
-                                        ? "text-primary bg-primary/10"
+                                        ? "text-white bg-[#0052FF] dark:bg-primary shadow-[0_10px_20px_-5px_rgba(0,82,255,0.4)] font-bold"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 )}
                             >
@@ -107,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                 </header>
 
-                <main className="flex-1 pb-10 md:pb-8">
+                <main className="flex-1 pb-10 md:pb-8 mb-12">
                     <div className="max-w-7xl mx-auto p-2 md:p-4">
                         {children}
                     </div>
@@ -115,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Mobile Bottom Nav */}
-            <div className="fixed bottom-6 left-6 right-6 z-50 md:hidden bg-card/85 backdrop-blur-xl border border-border/50 shadow-2xl rounded-[2rem] px-6 py-3 transition-all">
+            <div className="fixed bottom-3 left-6 right-6 z-50 md:hidden bg-card/90 backdrop-blur-2xl border border-border shadow-2xl rounded-[2.5rem] px-4 py-2 transition-all">
                 <nav className="flex justify-between items-center gap-4">
                     {NAV_ITEMS.map((item) => {
                         const isActive = pathname === item.href;
@@ -125,22 +125,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 href={item.href}
                                 className={cn(
                                     "flex flex-col items-center justify-center transition-all duration-300",
-                                    isActive ? "text-primary scale-110" : "text-muted-foreground hover:text-foreground"
+                                    isActive ? "scale-110" : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
                                 <div className={cn(
-                                    "p-2 rounded-2xl transition-all",
-                                    isActive && "bg-primary shadow-lg shadow-primary/40 text-white"
+                                    "p-3 rounded-2xl transition-all shadow-sm",
+                                    isActive && "bg-[#0052FF] text-white shadow-lg shadow-blue-500/40 border border-blue-400/20"
                                 )}>
-                                    <item.icon className="h-5 w-5" />
+                                    <item.icon className="h-4 w-4" />
                                 </div>
                                 {isActive && (
-                                    <motion.span
-                                        layoutId="mobile-nav-label"
-                                        className="text-[8px] font-bold mt-1"
-                                    >
+                                    <span className="text-[10px] font-black mt-1.5 text-primary uppercase tracking-tighter">
                                         {item.title}
-                                    </motion.span>
+                                    </span>
                                 )}
                             </Link>
                         )

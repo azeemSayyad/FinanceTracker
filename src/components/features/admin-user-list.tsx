@@ -47,7 +47,7 @@ export function AdminUserList({ users }: { users: User[] }) {
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/30 hover:shadow-primary/40 transition-all"
+                    className="btn-primary"
                 >
                     <Plus className="h-5 w-5" />
                     Add Partner
@@ -55,25 +55,26 @@ export function AdminUserList({ users }: { users: User[] }) {
             </div>
 
             {/* Search bar inside the page */}
-            <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <div className="relative group px-2">
+                <Search className="absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <input
                     placeholder="Search partners by name, role, or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                    className="w-full bg-card border border-border rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                 />
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2 px-4">
                 {filteredUsers.map((user, i) => (
                     <motion.div
                         key={user.id}
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.05 }}
-                        className="bg-card/50 hover:bg-card border border-border p-2 rounded-[2rem] flex items-center justify-between transition-all group"
+                        className="card-premium flex items-center justify-between group p-3"
                     >
+
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <Avatar name={user.username} size="lg" className="shadow-md" />
@@ -121,7 +122,7 @@ export function AdminUserList({ users }: { users: User[] }) {
                     </motion.div>
                 ))}
                 {filteredUsers.length === 0 && (
-                    <div className="lg:col-span-2 p-5 text-center bg-card/20 rounded-[2.5rem] border-2 border-dashed border-border">
+                    <div className="lg:col-span-2 p-2 text-center bg-card/20 rounded-[2.5rem] border-2 border-dashed border-border">
                         <UserIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
                         <p className="text-muted-foreground font-black uppercase tracking-widest">No partners found</p>
                     </div>
