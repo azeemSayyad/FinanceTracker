@@ -13,40 +13,36 @@ import { getMetadataArgsStorage } from "typeorm";
  */
 function fixTypeORMMinification() {
     const storage = getMetadataArgsStorage();
-    const entityMap = new Map<string, any>();
-    
-    // Restore entity class names and build map
+
+    // Hardcoded mapping of entity classes to their original names
+    // This is the most reliable way to handle minification in production
+    const entities = [
+        { target: User, name: "User" },
+        { target: Worker, name: "Worker" },
+        { target: Client, name: "Client" },
+        { target: Transaction, name: "Transaction" },
+    ];
+
+    entities.forEach(({ target, name }) => {
+        Object.defineProperty(target, "name", {
+            value: name,
+            configurable: true,
+        });
+    });
+
+    // Also ensure the table metadata is consistent
     storage.tables.forEach((table: any) => {
         if (table.target instanceof Function) {
-            const tableName = table.name;
-            // Restore the class name property
-            Object.defineProperty(table.target, "name", {
-                value: tableName,
-                configurable: true,
-            });
-            // Store in map for relationship lookups
-            entityMap.set(tableName, table.target);
-        }
-    });
-    
-    // Fix relationship metadata references
-    storage.relations.forEach((relation: any) => {
-        if (typeof relation.type === 'function') {
-            const relationType = relation.type();
-            if (relation.target instanceof Function) {
-                // Ensure the target entity in relationships can be found
-                const entityName = relation.target.name;
-                if (!entityMap.has(entityName)) {
-                    entityMap.set(entityName, relation.target);
-                }
+            // Find if this target is in our list
+            const found = entities.find(e => e.target === table.target);
+            if (found) {
+                Object.defineProperty(table.target, "name", {
+                    value: found.name,
+                    configurable: true,
+                });
             }
         }
     });
-    
-    // Patch TypeORM's entity lookup to use our map as fallback
-    if ((global as any).__typeormEntityMap === undefined) {
-        (global as any).__typeormEntityMap = entityMap;
-    }
 }
 
 export const AppDataSource = new DataSource({
