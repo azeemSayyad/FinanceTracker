@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import type { Transaction } from "./Transaction";
+import { Transaction } from "./Transaction";
 
 @Entity("workers")
 export class Worker {
@@ -18,7 +18,7 @@ export class Worker {
     @Column({ type: "text", nullable: true })
     notes?: string;
 
-    @OneToMany("Transaction", (transaction: Transaction) => transaction.worker)
+    @OneToMany(() => Transaction, (transaction: Transaction) => transaction.worker)
     transactions!: Transaction[];
 
     @CreateDateColumn()
